@@ -99,6 +99,13 @@ class MemoryStore:
         long_term = self.read_long_term()
         return f"## Long-term Memory\n{long_term}" if long_term else ""
 
+    def clear(self) -> None:
+        """Wipe MEMORY.md and HISTORY.md without archiving anything."""
+        if self.memory_file.exists():
+            self.memory_file.unlink()
+        if self.history_file.exists():
+            self.history_file.unlink()
+
     @staticmethod
     def _format_messages(messages: list[dict]) -> str:
         lines = []

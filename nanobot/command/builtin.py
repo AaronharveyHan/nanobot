@@ -91,6 +91,25 @@ async def cmd_new(ctx: CommandContext) -> OutboundMessage:
     )
 
 
+async def cmd_reset(ctx: CommandContext) -> OutboundMessage:
+    """Hard reset: wipe session history and memory without archiving.
+
+    Use this when the session is stuck (e.g. content-moderation errors caused
+    by poisoned tool results that keep failing every LLM call).
+    """
+    loop = ctx.loop
+    session = ctx.session or loop.sessions.get_or_create(ctx.key)
+    session.clear()
+    loop.sessions.save(session)
+    loop.sessions.invalidate(session.key)
+    loop.memory_consolidator.store.clear()
+    return OutboundMessage(
+        channel=ctx.msg.channel, chat_id=ctx.msg.chat_id,
+        content="Session and memory cleared. Starting fresh.",
+        metadata=dict(ctx.msg.metadata or {})
+    )
+
+
 async def cmd_help(ctx: CommandContext) -> OutboundMessage:
     """Return available slash commands."""
     return OutboundMessage(
@@ -106,6 +125,7 @@ def build_help_text() -> str:
     lines = [
         "🐈 nanobot commands:",
         "/new — Start a new conversation",
+        "/reset — Hard reset: wipe session and memory (use when stuck)",
         "/stop — Stop the current task",
         "/restart — Restart the bot",
         "/status — Show bot status",
@@ -119,6 +139,8 @@ def register_builtin_commands(router: CommandRouter) -> None:
     router.priority("/stop", cmd_stop)
     router.priority("/restart", cmd_restart)
     router.priority("/status", cmd_status)
+    router.priority("/reset", cmd_reset)
     router.exact("/new", cmd_new)
+    router.exact("/reset", cmd_reset)
     router.exact("/status", cmd_status)
     router.exact("/help", cmd_help)
