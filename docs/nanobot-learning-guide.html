@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nanobot 学习与开发文档</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-soft: #161b22;
+    --bg-card: #1c2128;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --text-dim: #8b949e;
+    --accent: #58a6ff;
+    --accent-2: #d2a8ff;
+    --green: #3fb950;
+    --orange: #d29922;
+    --red: #f85149;
+    --code-bg: #0b0f14;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.7;
+    font-size: 15px;
+  }
+  .layout { display: flex; }
+  /* Sidebar */
+  nav.sidebar {
+    width: 280px;
+    background: var(--bg-soft);
+    border-right: 1px solid var(--border);
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    overflow-y: auto;
+    padding: 24px 0;
+    flex-shrink: 0;
+  }
+  nav.sidebar .brand {
+    font-size: 22px;
+    font-weight: 700;
+    padding: 0 24px 16px;
+    color: #fff;
+  }
+  nav.sidebar .brand span { color: var(--accent); }
+  nav.sidebar a {
+    display: block;
+    padding: 6px 24px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 14px;
+    border-left: 3px solid transparent;
+    transition: all .15s;
+  }
+  nav.sidebar a:hover { color: var(--accent); background: rgba(88,166,255,.06); }
+  nav.sidebar a.section { margin-top: 14px; font-weight: 600; color: var(--text); font-size: 13px; text-transform: uppercase; letter-spacing: .5px; }
+  nav.sidebar a.sub { padding-left: 38px; font-size: 13px; }
+  /* Main */
+  main {
+    flex: 1;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 48px 56px 120px;
+    min-width: 0;
+  }
+  h1 { font-size: 34px; color: #fff; margin: 0 0 8px; }
+  h2 {
+    font-size: 26px; color: #fff; margin: 56px 0 18px;
+    padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+  h3 { font-size: 20px; color: var(--accent-2); margin: 36px 0 12px; }
+  h4 { font-size: 16px; color: var(--text); margin: 24px 0 10px; }
+  p { margin: 12px 0; }
+  a { color: var(--accent); }
+  code {
+    font-family: var(--mono);
+    background: var(--bg-card);
+    padding: 2px 6px;
+    border-radius: 5px;
+    font-size: 13px;
+    color: var(--accent-2);
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+  pre code { background: none; padding: 0; color: var(--text); font-size: 13px; line-height: 1.6; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0;
+    font-size: 14px;
+  }
+  th, td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; vertical-align: top; }
+  th { background: var(--bg-card); color: #fff; font-weight: 600; }
+  tr:nth-child(even) td { background: rgba(255,255,255,.015); }
+  .lead {
+    font-size: 17px; color: var(--text-dim);
+    border-left: 3px solid var(--accent); padding-left: 16px; margin: 20px 0;
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 18px 0;
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 16px; margin: 18px 0; }
+  .feat { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+  .feat .ico { font-size: 24px; }
+  .feat h4 { margin: 8px 0 6px; color: var(--accent); }
+  .feat p { margin: 0; font-size: 13px; color: var(--text-dim); }
+  .badge {
+    display: inline-block; padding: 2px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin-right: 6px;
+  }
+  .b-green { background: rgba(63,185,80,.15); color: var(--green); border: 1px solid rgba(63,185,80,.4); }
+  .b-blue { background: rgba(88,166,255,.15); color: var(--accent); border: 1px solid rgba(88,166,255,.4); }
+  .b-orange { background: rgba(210,153,34,.15); color: var(--orange); border: 1px solid rgba(210,153,34,.4); }
+  .note, .warn, .tip {
+    border-radius: 10px; padding: 14px 18px; margin: 18px 0; font-size: 14px;
+    border: 1px solid; display: flex; gap: 12px;
+  }
+  .note { background: rgba(88,166,255,.06); border-color: rgba(88,166,255,.3); }
+  .warn { background: rgba(248,81,73,.06); border-color: rgba(248,81,73,.3); }
+  .tip { background: rgba(63,185,80,.06); border-color: rgba(63,185,80,.3); }
+  .note .i, .warn .i, .tip .i { font-size: 18px; flex-shrink: 0; }
+  .ascii {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px; overflow-x: auto; font-family: var(--mono); font-size: 12.5px;
+    color: var(--text-dim); line-height: 1.45; white-space: pre; margin: 18px 0;
+  }
+  .toc-top { columns: 2; gap: 30px; margin: 20px 0; }
+  .toc-top a { display: block; padding: 4px 0; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+  .file-path { color: var(--green); font-family: var(--mono); font-size: 13px; }
+  .pill-row { margin: 14px 0; }
+  kbd { background: var(--bg-card); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 5px; padding: 1px 7px; font-family: var(--mono); font-size: 12px; }
+  .step { counter-reset: none; }
+  .step-item { display: flex; gap: 14px; margin: 14px 0; }
+  .step-num {
+    flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); color: #000; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; font-size: 14px;
+  }
+  footer { color: var(--text-dim); font-size: 13px; text-align: center; margin-top: 80px; padding-top: 24px; border-top: 1px solid var(--border); }
+  @media (max-width: 900px) {
+    nav.sidebar { display: none; }
+    main { padding: 28px 20px 80px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="sidebar">
+  <div class="brand">🐈 nano<span>bot</span></div>
+  <a href="#intro" class="section">一、项目总览</a>
+  <a href="#what" class="sub">是什么</a>
+  <a href="#features" class="sub">核心特性</a>
+  <a href="#stack" class="sub">技术栈</a>
+  <a href="#structure" class="sub">目录结构</a>
+
+  <a href="#arch" class="section">二、整体架构</a>
+  <a href="#arch-diagram" class="sub">分层架构图</a>
+  <a href="#dataflow" class="sub">消息数据流</a>
+
+  <a href="#core" class="section">三、核心模块</a>
+  <a href="#m-loop" class="sub">AgentLoop</a>
+  <a href="#m-runner" class="sub">AgentRunner</a>
+  <a href="#m-hook" class="sub">Hook 体系</a>
+  <a href="#m-context" class="sub">ContextBuilder</a>
+  <a href="#m-provider" class="sub">Provider 层</a>
+  <a href="#m-tools" class="sub">工具体系</a>
+  <a href="#m-channels" class="sub">渠道体系</a>
+  <a href="#m-session" class="sub">会话管理</a>
+  <a href="#m-memory" class="sub">记忆系统</a>
+  <a href="#m-config" class="sub">配置系统</a>
+  <a href="#m-others" class="sub">Cron/总线/心跳/API</a>
+
+  <a href="#dev" class="section">四、开发指南</a>
+  <a href="#dev-setup" class="sub">环境搭建</a>
+  <a href="#dev-provider" class="sub">新增 Provider</a>
+  <a href="#dev-channel" class="sub">新增 Channel</a>
+  <a href="#dev-tool" class="sub">新增 Tool</a>
+  <a href="#dev-skill" class="sub">新增 Skill</a>
+  <a href="#dev-command" class="sub">新增 Slash 命令</a>
+  <a href="#dev-test" class="sub">测试与质量</a>
+
+  <a href="#path" class="section">五、学习路径</a>
+  <a href="#iterate" class="sub">迭代建议</a>
+  <a href="#pitfalls" class="sub">易错点</a>
+</nav>
+
+<main>
+  <h1>🐈 nanobot 学习与开发文档</h1>
+  <p class="lead">一份面向「全面理解 + 迭代开发」的深度指南。基于源码 <code>v0.1.4.post6</code> 实测整理，涵盖架构、核心模块逐行解析、扩展开发手册与学习路线。</p>
+  <div class="pill-row">
+    <span class="badge b-blue">Python ≥ 3.11</span>
+    <span class="badge b-green">MIT License</span>
+    <span class="badge b-orange">异步架构</span>
+    <span class="badge b-blue">多 LLM / 多渠道</span>
+  </div>
+
+  <!-- ============ 一、总览 ============ -->
+  <h2 id="intro">一、项目总览</h2>
+
+  <h3 id="what">是什么</h3>
+  <p><strong>nanobot</strong> 是一个<strong>超轻量级个人 AI 助手框架</strong>，灵感来自 OpenClaw，用约 99% 更少的代码实现了完整的 Agent 能力。它把「LLM 循环 + 工具调用 + 多渠道接入 + 持久记忆 + 定时任务」收敛成一套清晰、可读、易扩展的代码，特别适合<strong>学习 Agent 原理</strong>与<strong>二次开发</strong>。</p>
+
+  <div class="card">
+    <strong>三种运行形态：</strong>
+    <table>
+      <tr><th>形态</th><th>命令</th><th>用途</th></tr>
+      <tr><td>CLI 交互</td><td><code>nanobot agent</code></td><td>终端里直接对话，开发调试首选</td></tr>
+      <tr><td>网关服务</td><td><code>nanobot gateway</code></td><td>同时接入 Telegram/Slack/微信等多渠道</td></tr>
+      <tr><td>OpenAI 兼容 API</td><td><code>nanobot serve</code></td><td>暴露 <code>/v1/chat/completions</code>，可用 OpenAI SDK 调用</td></tr>
+    </table>
+  </div>
+
+  <h3 id="features">核心特性</h3>
+  <div class="grid">
+    <div class="feat"><div class="ico">🪶</div><h4>超轻量</h4><p>核心 Agent 循环约 ~770 行，关注点分离清晰</p></div>
+    <div class="feat"><div class="ico">🔌</div><h4>多 Provider</h4><p>Anthropic / OpenAI / Gemini / DeepSeek / Qwen 等 20+，注册表驱动</p></div>
+    <div class="feat"><div class="ico">💬</div><h4>多渠道</h4><p>Telegram、Slack、Discord、微信、飞书、钉钉、QQ、Matrix、Email 等 12+</p></div>
+    <div class="feat"><div class="ico">🧠</div><h4>双层记忆</h4><p>MEMORY.md（长期事实）+ HISTORY.md（可搜索日志），按 token 自动压缩</p></div>
+    <div class="feat"><div class="ico">🛠️</div><h4>工具调用</h4><p>文件 / Shell / Web 搜索 / Cron / 子代理 / MCP</p></div>
+    <div class="feat"><div class="ico">⏰</div><h4>定时任务</h4><p>cron / every / at 三种调度，时区感知</p></div>
+    <div class="feat"><div class="ico">🪝</div><h4>可组合 Hook</h4><p>生命周期钩子支持流式、进度、内容过滤等扩展</p></div>
+    <div class="feat"><div class="ico">🔒</div><h4>安全沙箱</h4><p>allowFrom 白名单、workspace 隔离、Shell 危险命令拦截</p></div>
+  </div>
+
+  <h3 id="stack">技术栈</h3>
+  <table>
+    <tr><th>类别</th><th>依赖</th></tr>
+    <tr><td>LLM SDK</td><td><code>anthropic</code>、<code>openai</code>、<code>mcp</code></td></tr>
+    <tr><td>异步 / 网络</td><td><code>asyncio</code>、<code>websockets</code>、<code>httpx</code></td></tr>
+    <tr><td>CLI / 交互</td><td><code>typer</code>、<code>rich</code>、<code>prompt-toolkit</code>、<code>questionary</code></td></tr>
+    <tr><td>配置 / 校验</td><td><code>pydantic</code> v2、<code>pydantic-settings</code></td></tr>
+    <tr><td>工具支撑</td><td><code>tiktoken</code>(计 token)、<code>croniter</code>(cron)、<code>readability-lxml</code>(网页)、<code>ddgs</code>(搜索)、<code>json-repair</code></td></tr>
+    <tr><td>渠道 SDK</td><td><code>python-telegram-bot</code>、<code>slack-sdk</code>、<code>discord.py</code>、<code>lark-oapi</code>、<code>dingtalk-stream</code>、<code>qq-botpy</code>、<code>matrix-nio</code></td></tr>
+    <tr><td>日志 / 构建</td><td><code>loguru</code>、<code>hatchling</code>、<code>pytest</code>、<code>ruff</code></td></tr>
+  </table>
+
+  <h3 id="structure">目录结构</h3>
+  <div class="ascii">nanobot/
+├── nanobot/                  # 主包
+│   ├── agent/                # ★ 核心：Agent 循环与执行引擎
+│   │   ├── loop.py           #   AgentLoop —— 消息编排、session、checkpoint
+│   │   ├── runner.py         #   AgentRunner —— 纯 LLM 循环逻辑
+│   │   ├── hook.py           #   生命周期 Hook 接口 + CompositeHook
+│   │   ├── context.py        #   ContextBuilder —— 拼装 system prompt + messages
+│   │   ├── memory.py         #   双层记忆 + token 触发压缩
+│   │   ├── skills.py         #   技能加载器
+│   │   ├── subagent.py       #   子代理派生
+│   │   └── tools/            #   内置工具（filesystem/shell/web/cron/mcp/...）
+│   ├── providers/            # LLM 提供商：base + registry + 各后端实现
+│   ├── channels/             # 聊天平台适配器 + 自动发现 + ChannelManager
+│   ├── session/              # Session + SessionManager（JSONL 持久化 + 缓存）
+│   ├── config/               # schema(Pydantic) + loader + paths
+│   ├── command/              # Slash 命令路由 router + builtin
+│   ├── cli/                  # Typer 命令：agent / gateway / serve / onboard
+│   ├── cron/                 # 定时任务服务
+│   ├── bus/                  # 消息总线（异步队列）+ 事件
+│   ├── heartbeat/            # 心跳 / 长任务管理
+│   ├── api/                  # OpenAI 兼容 API server
+│   ├── skills/               # 内置技能（cron/github/memory/weather/...）
+│   └── utils/                # 辅助函数
+├── tests/                    # 测试套件（65+ 文件）
+├── bridge/                   # WhatsApp Node.js 桥接
+├── docs/                     # 文档（本文件所在）
+└── pyproject.toml            # 项目元信息 / 依赖 / 工具配置</div>
+
+  <!-- ============ 二、架构 ============ -->
+  <h2 id="arch">二、整体架构</h2>
+
+  <h3 id="arch-diagram">分层架构图</h3>
+  <p>nanobot 的核心思想是<strong>用消息总线（MessageBus）把「渠道层」与「Agent 核心」解耦</strong>，再用 <code>AgentRunner</code> 把纯粹的 LLM 循环从产品逻辑里抽离出来。</p>
+  <div class="ascii">┌───────────────────────────────────────────────────────────────┐
+│                        渠道层 (channels/)                       │
+│  Telegram · Slack · Discord · 微信 · 飞书 · 钉钉 · QQ · Matrix   │
+│  每个继承 BaseChannel：收消息→鉴权→InboundMessage              │
+└───────────────────────────┬───────────────────────────────────┘
+                            │ publish_inbound / consume_outbound
+                            ▼
+                ┌───────────────────────────┐
+                │   MessageBus (bus/queue)  │  两条 asyncio.Queue
+                │   inbound  /  outbound    │  彻底解耦收发
+                └─────────────┬─────────────┘
+                            ▼
+        ┌─────────────────────────────────────────────┐
+        │            AgentLoop (agent/loop.py)         │
+        │  · 按 session 串行、跨 session 并发          │
+        │  · /命令 优先分发  · checkpoint 中断恢复     │
+        │  · 注册默认工具 + 连接 MCP                   │
+        └───┬───────────────┬───────────────┬─────────┘
+            │               │               │
+            ▼               ▼               ▼
+   ContextBuilder    SessionManager    MemoryConsolidator
+  (拼 prompt+history)  (JSONL+缓存)    (token 触发压缩)
+            │
+            ▼
+   ┌──────────────────────────────────────┐
+   │      AgentRunner (agent/runner.py)   │  ← 纯执行引擎
+   │  for iter in range(max_iterations):  │
+   │    snip history → 调 LLM → 工具循环  │
+   │  贯穿 AgentHook 生命周期             │
+   └───┬──────────────────────┬───────────┘
+       │ 调用                 │ 执行
+       ▼                      ▼
+  LLMProvider           ToolRegistry
+ (base + 各后端)     (filesystem/shell/web/cron/mcp/spawn/message)</div>
+
+  <div class="tip"><span class="i">💡</span><div><strong>设计要点：</strong>「<code>AgentRunner</code> 不知道渠道、不知道 session」——它只接收一个 <code>AgentRunSpec</code>（消息+工具+模型+回调），返回 <code>AgentRunResult</code>。这让同一套循环逻辑能被 CLI、网关、API、子代理、心跳复用。</div></div>
+
+  <h3 id="dataflow">消息数据流</h3>
+  <div class="ascii">用户消息
+  ↓  渠道 SDK 回调
+BaseChannel._handle_message()        # 鉴权 is_allowed(sender_id)
+  ↓
+InboundMessage(channel, sender_id, chat_id, content, media, metadata,
+               session_key_override)  # 线程级会话可覆盖 key
+  ↓  bus.publish_inbound()
+AgentLoop.run() 消费 → _dispatch()    # 取 per-session 锁 + 全局并发信号量
+  ↓
+_process_message():
+  1. sessions.get_or_create(key)               # 载入/新建会话（带内存缓存）
+  2. restore_runtime_checkpoint()              # 崩溃/重启后恢复未完成回合
+  3. memory_consolidator.maybe_consolidate()   # token 超预算→压缩旧消息
+  4. 处理 /命令（commands.dispatch）
+  5. context.build_messages(history, ...)      # system + 历史 + 当前
+  6. AgentRunner.run(spec):
+       循环：snip_history → provider.chat_*_with_retry → 工具执行 → 回填
+  7. _save_turn() 写回 session.messages
+  8. 后台再触发一次 maybe_consolidate
+  ↓
+OutboundMessage → bus → ChannelManager._dispatch_outbound()
+  ↓  流式 delta 合并 + 失败重试(1s/2s/4s)
+Channel.send() → 用户</div>
+
+  <!-- ============ 三、核心模块 ============ -->
+  <h2 id="core">三、核心模块逐一解析</h2>
+
+  <!-- AgentLoop -->
+  <h3 id="m-loop">3.1 AgentLoop —— 消息编排引擎</h3>
+  <p class="file-path">nanobot/agent/loop.py</p>
+  <p><code>AgentLoop</code> 是整个系统的「大脑外壳」，负责把一条消息从进入到回复的全流程串起来，但把真正的 LLM 循环委托给 <code>AgentRunner</code>。</p>
+
+  <h4>关键职责</h4>
+  <table>
+    <tr><th>职责</th><th>说明</th></tr>
+    <tr><td>消息分发</td><td><code>run()</code> 从 bus 持续消费；<code>_dispatch()</code> 按 session 加锁串行，跨 session 用全局信号量 <code>NANOBOT_MAX_CONCURRENT_REQUESTS</code> 并发</td></tr>
+    <tr><td>命令优先</td><td><code>/stop</code> <code>/restart</code> <code>/status</code> <code>/reset</code> 是 priority 命令，不进 LLM、不抢 session 锁，崩溃时也能用</td></tr>
+    <tr><td>上下文构建</td><td>调用 <code>ContextBuilder</code> 生成 system prompt + history</td></tr>
+    <tr><td>工具注册</td><td><code>_register_default_tools()</code> 注册文件/Shell/Web/Message/Spawn/Cron；延迟连接 MCP</td></tr>
+    <tr><td>记忆压缩</td><td>处理前同步、处理后异步各触发一次 <code>maybe_consolidate_by_tokens</code></td></tr>
+    <tr><td>断点续传</td><td><code>checkpoint</code> 把「assistant 消息 + 已完成工具结果 + 待执行工具」存入 session.metadata，重启后恢复</td></tr>
+  </table>
+
+  <h4>内部 Hook：_LoopHook</h4>
+  <p>AgentLoop 把产品层关切（流式、进度、去 <code>&lt;think&gt;</code> 标签、工具上下文）封装进 <code>_LoopHook</code>，再与用户自定义 hook 组成 <code>_LoopHookChain</code> 一起传给 runner：</p>
+  <pre><code># _LoopHook 关键回调
+wants_streaming()      → 是否启用流式
+on_stream(delta)       → 累积 delta、剥离 think 标签后增量发布到渠道
+before_execute_tools() → 记录工具调用、设置工具上下文(channel/chat_id/message_id)
+after_iteration()      → 记录 token usage
+finalize_content()     → 去掉 think 标签产出最终文本</code></pre>
+
+  <!-- AgentRunner -->
+  <h3 id="m-runner">3.2 AgentRunner —— 纯 LLM 循环引擎</h3>
+  <p class="file-path">nanobot/agent/runner.py</p>
+  <p>这是「Agent」的心脏：一个标准的<strong>「调用 LLM → 若有工具调用则执行 → 回填结果 → 再调 LLM」</strong>循环，直到产出最终文本或触达停止条件。</p>
+
+  <h4>输入 / 输出契约</h4>
+  <pre><code>@dataclass(slots=True)
+class AgentRunSpec:
+    initial_messages: list[dict]   # system + history + 当前消息
+    tools: ToolRegistry
+    model: str
+    max_iterations: int            # 默认 200
+    max_tool_result_chars: int     # 工具结果截断
+    concurrent_tools: bool = False # 同批 read-only 工具并发
+    context_window_tokens: int | None = None
+    provider_retry_mode: str = "standard"  # 或 "persistent"
+    progress_callback / checkpoint_callback / hook ...
+
+@dataclass(slots=True)
+class AgentRunResult:
+    final_content: str | None
+    messages: list[dict]
+    tools_used: list[str]
+    usage: dict[str, int]
+    stop_reason: str   # completed / error / max_iterations / tool_error / empty_final_response</code></pre>
+
+  <h4>主循环逻辑</h4>
+  <div class="ascii">for iteration in range(max_iterations):
+    1. _apply_tool_result_budget()   # 截断过长工具结果
+    2. _snip_history()               # 按 context_window 倒序保留最新消息，
+                                     #   并确保以完整 user 回合开头
+    3. before_iteration(hook)
+    4. response = provider.chat_stream_with_retry(...)  # 流式优先
+    5. if response.has_tool_calls:
+         · on_stream_end(resuming=True)
+         · 构造 assistant_message(content + tool_calls)
+         · checkpoint(phase="awaiting_tools")
+         · _execute_tools()  # 并发/串行
+         · 回填每个 tool 结果消息
+         · checkpoint(phase="tools_completed") → continue
+       else:  # 最终回复
+         · clean = finalize_content(response.content)
+         · 空响应？→ _request_finalization_retry() 强制回话
+         · 三种收尾：error / empty_final_response / completed
+else:  # 跑满迭代
+    stop_reason = "max_iterations"</div>
+
+  <div class="note"><span class="i">🔍</span><div><strong>工具并发模型：</strong><code>_partition_tool_batches()</code> 依据每个工具的 <code>concurrency_safe</code>（= <code>read_only and not exclusive</code>）把调用分批：read-only 的批内用 <code>asyncio.gather</code> 并发，有副作用的串行执行。</div></div>
+
+  <!-- Hook -->
+  <h3 id="m-hook">3.3 Hook 体系 —— 可组合的生命周期</h3>
+  <p class="file-path">nanobot/agent/hook.py</p>
+  <p>Hook 是 nanobot 实现「不改核心代码即可扩展」的关键。所有自定义行为都通过实现 <code>AgentHook</code> 接口注入。</p>
+  <table>
+    <tr><th>Hook 方法</th><th>时机</th><th>典型用途</th></tr>
+    <tr><td><code>wants_streaming()</code></td><td>初始化</td><td>声明需要流式 delta</td></tr>
+    <tr><td><code>before_iteration(ctx)</code></td><td>每轮开始</td><td>改写消息、埋点</td></tr>
+    <tr><td><code>on_stream(ctx, delta)</code></td><td>流式每个 chunk</td><td>实时转发到渠道</td></tr>
+    <tr><td><code>on_stream_end(ctx, resuming)</code></td><td>流结束</td><td>resuming=True→工具将执行；False→最终回复</td></tr>
+    <tr><td><code>before_execute_tools(ctx)</code></td><td>工具执行前</td><td>记录、设置上下文</td></tr>
+    <tr><td><code>after_iteration(ctx)</code></td><td>每轮结束</td><td>统计 usage、checkpoint</td></tr>
+    <tr><td><code>finalize_content(ctx, content)</code></td><td>产出最终文本</td><td>同步管道式过滤（如去 think）</td></tr>
+  </table>
+  <p><code>CompositeHook</code> 把多个 hook 扇出执行：异步方法<strong>异常隔离</strong>（单个 hook 报错不影响其他），而 <code>finalize_content</code> 是<strong>串联管道</strong>（不隔离，让 bug 浮现）。</p>
+
+  <!-- Context -->
+  <h3 id="m-context">3.4 ContextBuilder —— prompt 拼装</h3>
+  <p class="file-path">nanobot/agent/context.py</p>
+  <p>负责把「身份 + bootstrap 文件 + 记忆 + 技能 + 历史 + 当前消息」拼成最终发给 LLM 的 messages 数组。</p>
+  <h4>system prompt 组成（用 <code>---</code> 分隔）</h4>
+  <div class="ascii">build_system_prompt():
+  1. _get_identity()        # 运行时(OS/Python)、workspace 路径、平台策略、使用准则
+  2. bootstrap 文件         # AGENTS.md / SOUL.md / USER.md / TOOLS.md（存在才加）
+  3. memory.get_memory_context()   # MEMORY.md 长期记忆
+  4. 常驻技能(always=true)
+  5. 技能摘要(XML，渐进式加载，LLM 用 read_file 读全文)</div>
+  <div class="warn"><span class="i">⚠️</span><div><strong>记忆污染要点：</strong>MEMORY.md 的内容每次都会拼进 system prompt。若内容触发模型内容审核（如曾遇到的 Dashscope <code>DataInspectionFailed</code>），每次请求都会失败 —— 这也是为什么需要 <code>/reset</code> 同时清 session 与 MEMORY.md。</div></div>
+
+  <h4>build_messages 细节</h4>
+  <ul>
+    <li>运行时元数据（时间、channel、chat_id）打上 <code>[Runtime Context — metadata only]</code> 标记，与用户内容合并成<strong>同一条 user 消息</strong>，避免连续同角色被某些 provider 拒绝。</li>
+    <li>多模态：图片用魔法字节检测 MIME，编码为 <code>data:{mime};base64,...</code> 的 <code>image_url</code> 块。</li>
+  </ul>
+
+  <!-- Provider -->
+  <h3 id="m-provider">3.5 Provider 层 —— LLM 抽象与重试</h3>
+  <p class="file-path">nanobot/providers/base.py · registry.py</p>
+  <p><code>LLMProvider</code> 抽象基类定义统一接口，并内置一套强大的重试与降级逻辑；<code>registry.py</code> 用一张 <code>PROVIDERS</code> 表驱动「模型名→provider」的自动匹配。</p>
+
+  <h4>统一数据结构</h4>
+  <pre><code>@dataclass
+class ToolCallRequest:    # 标准化工具调用
+    id: str; name: str; arguments: dict
+    def to_openai_tool_call(self) -> dict
+
+@dataclass
+class LLMResponse:
+    content: str | None
+    tool_calls: list[ToolCallRequest]
+    finish_reason: str         # stop / tool_calls / error
+    usage: dict                # prompt/completion/cached tokens
+    reasoning_content: str | None   # DeepSeek-R1/Kimi 等
+    thinking_blocks: list | None    # Anthropic 扩展思考</code></pre>
+
+  <h4>重试决策（_run_with_retry）</h4>
+  <table>
+    <tr><th>情况</th><th>处理</th></tr>
+    <tr><td>非错误响应</td><td>直接返回</td></tr>
+    <tr><td>非瞬时错误 + 含图片</td><td>剥离图片重试一次（降级）</td></tr>
+    <tr><td>瞬时错误（429/500/timeout）standard</td><td>重试 3 次，延迟 1/2/4 秒</td></tr>
+    <tr><td>瞬时错误 persistent</td><td>无限重试，最大延迟 60s；相同错误 10 次后停止；等待期每 30s 心跳</td></tr>
+  </table>
+
+  <h4>新增 Provider 只要 2 步（注册表驱动）</h4>
+  <p>这是 nanobot 最优雅的设计之一 —— 没有任何 if-elif 链。详见 <a href="#dev-provider">开发指南 §4.2</a>。支持的后端：<code>openai_compat</code>（默认）、<code>anthropic</code>、<code>azure_openai</code>、<code>openai_codex</code>、<code>github_copilot</code>。</p>
+
+  <!-- Tools -->
+  <h3 id="m-tools">3.6 工具体系</h3>
+  <p class="file-path">nanobot/agent/tools/</p>
+  <p>每个工具继承 <code>Tool</code> 抽象类，自描述 name/description/parameters(JSON Schema)，由 <code>ToolRegistry</code> 统一注册与执行。</p>
+  <pre><code>class Tool(ABC):
+    name / description / parameters     # 抽象属性
+    read_only: bool = False             # 副作用自由→可并发
+    exclusive: bool = False             # 必须独占运行
+    concurrency_safe = read_only and not exclusive
+    async def execute(**kwargs) -> Any  # 抽象方法
+    cast_params() / validate_params() / to_schema()</code></pre>
+  <table>
+    <tr><th>工具</th><th>类</th><th>能力</th></tr>
+    <tr><td>filesystem.py</td><td>ReadFile / WriteFile / EditFile / ListDir</td><td>文件读写编辑、目录列举（支持图片、分页）</td></tr>
+    <tr><td>shell.py</td><td>ExecTool</td><td>执行 shell；内置危险命令正则黑名单（rm -rf / mkfs / dd / fork bomb 等）</td></tr>
+    <tr><td>web.py</td><td>WebSearchTool / WebFetchTool</td><td>Brave/DuckDuckGo/Tavily/Jina/SearXNG 搜索 + 网页抓取</td></tr>
+    <tr><td>message.py</td><td>MessageTool</td><td>主动发消息到指定渠道（含媒体）</td></tr>
+    <tr><td>cron.py</td><td>CronTool</td><td>add/list/remove 定时任务</td></tr>
+    <tr><td>spawn.py</td><td>SpawnTool</td><td>派生后台子代理</td></tr>
+    <tr><td>mcp.py</td><td>MCPToolWrapper</td><td>把 MCP server 的工具包装成原生工具</td></tr>
+  </table>
+  <p>文件工具通过 <code>_resolve_path()</code> 强制目录隔离；当 <code>restrictToWorkspace=true</code> 时所有路径必须落在 workspace 内，防止路径穿越。</p>
+
+  <!-- Channels -->
+  <h3 id="m-channels">3.7 渠道体系</h3>
+  <p class="file-path">nanobot/channels/</p>
+  <p>所有渠道继承 <code>BaseChannel</code>，实现 <code>start/stop/send</code>，可选实现 <code>send_delta</code> 支持流式。<code>discover_all()</code> 通过扫描包 + entry_points 自动发现内置与第三方插件渠道。</p>
+  <pre><code>class BaseChannel(ABC):
+    async def start() / stop() / send(msg)          # 抽象
+    async def send_delta(chat_id, delta)            # 可选，流式
+    def is_allowed(sender_id) -> bool               # allowFrom 鉴权
+    async def _handle_message(...) -> None          # 收消息→鉴权→入总线</code></pre>
+  <div class="card">
+    <strong>鉴权语义（安全默认）：</strong>
+    <ul style="margin:8px 0 0">
+      <li><code>allowFrom = []</code> → <strong>拒绝所有人</strong>（v0.1.4.post4 起）</li>
+      <li><code>allowFrom = ["*"]</code> → 允许所有人</li>
+      <li><code>allowFrom = ["id1","id2"]</code> → 白名单</li>
+    </ul>
+  </div>
+  <p><code>ChannelManager</code> 负责出站分发：合并连续的 <code>_stream_delta</code> 减少 API 调用、按 <code>sendMaxRetries</code> 做 1s/2s/4s 退避重试。</p>
+  <div class="note"><span class="i">📌</span><div><strong>线程级会话：</strong>Slack/Discord 在子线程里把 <code>session_key</code> 设为 <code>slack:{chat_id}:{thread_ts}</code>，每个线程独立会话。这也是之前删错 session 文件的根因。</div></div>
+
+  <!-- Session -->
+  <h3 id="m-session">3.8 会话管理</h3>
+  <p class="file-path">nanobot/session/manager.py</p>
+  <p><code>Session</code> 持有完整消息列表 + <code>last_consolidated</code> 指针；<code>SessionManager</code> 提供内存缓存 + JSONL 持久化。</p>
+  <h4>JSONL 格式</h4>
+  <pre><code># 第一行元数据
+{"_type":"metadata","key":"telegram:123","created_at":"...","last_consolidated":5}
+# 后续每行一条消息
+{"role":"user","content":"...","timestamp":"..."}
+{"role":"assistant","content":"...","tool_calls":[...]}
+{"role":"tool","tool_call_id":"...","name":"read_file","content":"..."}</code></pre>
+  <h4>「合法边界」对齐</h4>
+  <p><code>get_history()</code> 取 <code>last_consolidated</code> 之后的消息，并保证：① 从 user 回合开始；② 用 <code>find_legal_message_start()</code> 丢弃开头孤立的 tool 结果。这避免给 LLM 发送「有 tool 结果却没有对应 tool_call」的非法序列。</p>
+  <div class="warn"><span class="i">⚠️</span><div><strong>缓存陷阱：</strong><code>SessionManager._cache</code> 是进程级缓存。<u>删磁盘 JSONL 文件对运行中的进程无效</u>，必须重启或调用 <code>invalidate()</code>。<code>/reset</code> 命令正是通过 <code>clear()+save()+invalidate()</code> 一次性解决。</div></div>
+
+  <!-- Memory -->
+  <h3 id="m-memory">3.9 记忆系统</h3>
+  <p class="file-path">nanobot/agent/memory.py</p>
+  <p>双层记忆 + 基于 token 预算的自动压缩，是 nanobot 处理长对话的核心。</p>
+  <table>
+    <tr><th>层</th><th>文件</th><th>作用</th></tr>
+    <tr><td>长期记忆</td><td>MEMORY.md</td><td>LLM 提炼的事实，全量覆盖式更新，拼进 system prompt</td></tr>
+    <tr><td>历史日志</td><td>HISTORY.md</td><td>带时间戳的摘要段落，追加式，可 grep 检索</td></tr>
+  </table>
+  <h4>压缩触发逻辑（maybe_consolidate_by_tokens）</h4>
+  <div class="ascii">budget = context_window − max_completion_tokens − 1024(安全缓冲)
+target = budget / 2
+若 估算 prompt token ≥ budget:
+   循环(最多5轮):
+     pick_consolidation_boundary()  # 选一个 user 回合边界
+     把该段旧消息发给 LLM → 调 save_memory 工具:
+        history_entry → 追加 HISTORY.md
+        memory_update → 覆盖 MEMORY.md
+     session.last_consolidated = 边界  # 旧消息不再发给 LLM
+   直到 估算 ≤ target</div>
+  <p>失败兜底：连续失败 ≥3 次后 <code>_raw_archive</code> 把原始消息直接 dump 进 HISTORY.md，保证不丢数据。</p>
+
+  <!-- Config -->
+  <h3 id="m-config">3.10 配置系统</h3>
+  <p class="file-path">nanobot/config/</p>
+  <p>基于 Pydantic v2，支持 camelCase ⇄ snake_case 别名，配置文件 <code>~/.nanobot/config.json</code>。</p>
+  <pre><code>Config
+├── agents.defaults    # model / provider / max_tokens / context_window_tokens
+│                      # temperature / max_tool_iterations / timezone / ...
+├── channels           # 各渠道配置 + 全局 sendProgress/sendMaxRetries
+├── providers          # 20+ provider 的 apiKey/apiBase/extraHeaders
+├── tools              # web / exec / restrictToWorkspace / mcpServers
+├── api                # OpenAI 兼容服务器 host/port/timeout
+└── gateway</code></pre>
+  <h4>Provider 自动匹配优先级（_match_provider）</h4>
+  <div class="ascii">1. provider != "auto"  → 直接用指定的
+2. 模型名显式前缀匹配  (anthropic/claude... → anthropic)
+3. 关键词匹配          (按 PROVIDERS 注册表顺序)
+4. 本地 provider 回退  (vLLM / Ollama，按 apiBase)
+5. 任意已配 apiKey 的 provider（OAuth 除外）</div>
+  <p>关键默认值：<code>model=anthropic/claude-opus-4-5</code>、<code>context_window_tokens=65536</code>、<code>max_tokens=8192</code>、<code>max_tool_iterations=200</code>、<code>temperature=0.1</code>、<code>timezone=UTC</code>。</p>
+
+  <!-- Others -->
+  <h3 id="m-others">3.11 Cron / 总线 / 心跳 / API</h3>
+  <div class="card">
+    <h4 style="margin-top:0">⏰ Cron 服务 <span class="file-path">cron/service.py</span></h4>
+    <p>三种调度：<code>at</code>（一次性时间戳）、<code>every</code>（周期 ms）、<code>cron</code>（表达式 + 时区）。持久化到 <code>jobs.json</code>，支持外部修改 mtime 自动重载，运行历史保留最近 20 条。</p>
+  </div>
+  <div class="card">
+    <h4 style="margin-top:0">🚌 消息总线 <span class="file-path">bus/queue.py · events.py</span></h4>
+    <p>两条 <code>asyncio.Queue</code>（inbound/outbound）。<code>InboundMessage.session_key</code> = <code>session_key_override or f"{channel}:{chat_id}"</code>。</p>
+  </div>
+  <div class="card">
+    <h4 style="margin-top:0">💓 心跳服务 <span class="file-path">heartbeat/service.py</span></h4>
+    <p>三阶段：① 决策（读 HEARTBEAT.md，LLM 用虚拟工具决定 skip/run）→ ② 执行（跑完整 agent 循环）→ ③ 评估（决定是否打扰用户）。用<strong>虚拟工具调用</strong>替代自由文本解析，更稳。</p>
+  </div>
+  <div class="card">
+    <h4 style="margin-top:0">🔗 OpenAI 兼容 API <span class="file-path">api/server.py</span></h4>
+    <p><code>POST /v1/chat/completions</code>、<code>GET /v1/models</code>、<code>GET /health</code>。每用户会话锁串行，支持 <code>session_id</code>，暂不支持 <code>stream=true</code>。</p>
+  </div>
+
+  <!-- ============ 四、开发指南 ============ -->
+  <h2 id="dev">四、迭代开发指南</h2>
+
+  <h3 id="dev-setup">4.1 环境搭建</h3>
+  <pre><code># 克隆 + 可编辑安装（含开发依赖）
+git clone https://github.com/HKUDS/nanobot.git
+cd nanobot
+pip install -e ".[dev]"
+
+# 初始化配置与工作区
+nanobot onboard            # 或 nanobot onboard --wizard 交互式
+
+# 在 ~/.nanobot/config.json 填入 apiKey 与 model 后：
+nanobot agent              # 终端对话调试
+nanobot agent -m "你好"    # 单次消息
+
+# 跑测试 / lint
+pytest tests/ -v
+pytest tests/agent/test_runner.py     # 单文件
+pytest --cov=nanobot                  # 覆盖率
+ruff check nanobot/                   # 静态检查</code></pre>
+  <div class="tip"><span class="i">🧭</span><div><strong>调试建议：</strong>开发新功能优先用 <code>nanobot agent</code>（CLI）跑通，再接渠道。CLI 走的是同一套 <code>AgentLoop.process_direct()</code>，问题更容易定位。</div></div>
+
+  <h3 id="dev-provider">4.2 新增一个 LLM Provider</h3>
+  <p>若是 OpenAI 兼容端点，只需 2 步、零 if-elif：</p>
+  <div class="step">
+    <div class="step-item"><div class="step-num">1</div><div>
+      在 <span class="file-path">providers/registry.py</span> 的 <code>PROVIDERS</code> 加一条：
+      <pre><code>ProviderSpec(
+    name="myprovider",                  # 对应 config 字段名
+    keywords=("myprovider", "mymodel"), # 模型名自动匹配关键词
+    env_key="MYPROVIDER_API_KEY",
+    display_name="My Provider",
+    default_api_base="https://api.myprovider.com/v1",
+    # 可选：supports_max_completion_tokens / model_overrides /
+    #       is_gateway / detect_by_key_prefix / strip_model_prefix ...
+)</code></pre>
+    </div></div>
+    <div class="step-item"><div class="step-num">2</div><div>
+      在 <span class="file-path">config/schema.py</span> 的 <code>ProvidersConfig</code> 加字段：
+      <pre><code>class ProvidersConfig(Base):
+    ...
+    myprovider: ProviderConfig = ProviderConfig()</code></pre>
+    </div></div>
+  </div>
+  <p>环境变量注入、模型路由、<code>nanobot status</code> 显示全部自动生效。若需要非兼容后端（如自定义鉴权），设 <code>backend=</code> 并实现对应 Provider 类。</p>
+
+  <h3 id="dev-channel">4.3 新增一个渠道</h3>
+  <div class="step">
+    <div class="step-item"><div class="step-num">1</div><div>在 <span class="file-path">channels/</span> 新建 <code>mychannel.py</code>，继承 <code>BaseChannel</code>：</div></div>
+  </div>
+  <pre><code>from nanobot.channels.base import BaseChannel
+from nanobot.bus.events import OutboundMessage
+
+class MyChannel(BaseChannel):
+    name = "mychannel"
+    display_name = "My Channel"
+
+    @classmethod
+    def default_config(cls) -> dict:
+        return {"enabled": False, "token": "", "allowFrom": []}
+
+    async def start(self) -> None:
+        self._running = True
+        # 连接平台 SDK，收到消息时调用：
+        # await self._handle_message(sender_id, chat_id, content,
+        #                            media=[], metadata={}, session_key=None)
+
+    async def stop(self) -> None:
+        self._running = False
+
+    async def send(self, msg: OutboundMessage) -> None:
+        # 调用平台 API 把 msg.content / msg.media 发出去（失败请 raise）
+        ...
+
+    # 可选：实现 send_delta 即获得流式能力
+    async def send_delta(self, chat_id, delta, metadata=None) -> None:
+        ...</code></pre>
+  <p>内置渠道会被 <code>discover_all()</code> 自动扫描；外部插件可通过 <code>entry_points(group="nanobot.channels")</code> 注册。<code>onboard</code> 会自动把 <code>default_config()</code> 注入 config.json。</p>
+
+  <h3 id="dev-tool">4.4 新增一个工具</h3>
+  <pre><code>from nanobot.agent.tools.base import Tool
+
+class WeatherTool(Tool):
+    @property
+    def name(self) -> str: return "get_weather"
+    @property
+    def description(self) -> str: return "查询某城市天气"
+    @property
+    def parameters(self) -> dict:
+        return {
+            "type": "object",
+            "properties": {"city": {"type": "string", "description": "城市名"}},
+            "required": ["city"],
+        }
+    @property
+    def read_only(self) -> bool: return True   # 无副作用→可并发
+
+    async def execute(self, city: str) -> str:
+        ...  # 返回字符串结果
+        return f"{city}: 晴, 22°C"</code></pre>
+  <p>然后在 <code>AgentLoop._register_default_tools()</code>（或你的初始化处）<code>self.tools.register(WeatherTool())</code>。无副作用工具记得设 <code>read_only=True</code> 以享受并发。</p>
+
+  <h3 id="dev-skill">4.5 新增一个技能（Skill）</h3>
+  <p>技能是「教 LLM 如何做某类任务」的 Markdown 文件，渐进式加载（LLM 需要时才用 read_file 读全文）。</p>
+  <pre><code># workspace/skills/my-skill/SKILL.md
+---
+name: my-skill
+description: "一句话描述这个技能做什么"
+metadata: {"nanobot": {"always": false, "requires": {"bins": ["curl"], "env": []}}}
+---
+
+# 任务步骤
+1. 第一步...
+2. 第二步...</code></pre>
+  <p>放在 <code>workspace/skills/</code>（用户级，优先）或 <code>nanobot/skills/</code>（内置）。<code>always=true</code> 的技能常驻 system prompt；<code>requires</code> 不满足的技能会被标记 <code>available="false"</code>。</p>
+
+  <h3 id="dev-command">4.6 新增一个 Slash 命令</h3>
+  <pre><code># nanobot/command/builtin.py
+async def cmd_ping(ctx: CommandContext) -> OutboundMessage:
+    return OutboundMessage(
+        channel=ctx.msg.channel, chat_id=ctx.msg.chat_id,
+        content="pong", metadata=dict(ctx.msg.metadata or {}),
+    )
+
+def register_builtin_commands(router: CommandRouter) -> None:
+    ...
+    router.exact("/ping", cmd_ping)        # 精确匹配（进 dispatch 锁）
+    # 或 router.priority("/ping", cmd_ping) # 优先（绕过 LLM，崩溃可用）
+    # 或 router.prefix("/echo ", cmd_echo)  # 前缀带参数</code></pre>
+  <div class="warn"><span class="i">⚠️</span><div><strong>渠道白名单坑：</strong>Telegram 用正则白名单转发命令（<code>^/(new|reset|stop|restart|status)$</code>）。新增命令若想在 Telegram 生效，<u>必须同步把命令名加进 <span class="file-path">channels/telegram.py</span> 的正则</u>，否则会被 <code>~filters.COMMAND</code> 静默丢弃。</div></div>
+
+  <h3 id="dev-test">4.7 测试与质量</h3>
+  <p>测试在 <span class="file-path">tests/</span>，按模块组织（agent/cron/providers/config/channels/tools/security/cli）。<code>asyncio_mode=auto</code> 已开启，async 测试无需额外装饰。</p>
+  <table>
+    <tr><th>命令</th><th>用途</th></tr>
+    <tr><td><code>pytest tests/</code></td><td>全量</td></tr>
+    <tr><td><code>pytest tests/agent/ -v</code></td><td>核心循环/记忆/心跳</td></tr>
+    <tr><td><code>pytest --cov=nanobot --cov-report=term-missing</code></td><td>覆盖率 + 缺失行</td></tr>
+    <tr><td><code>ruff check nanobot/</code></td><td>lint（line-length=100，规则 E/F/I/N/W）</td></tr>
+  </table>
+
+  <!-- ============ 五、学习路径 ============ -->
+  <h2 id="path">五、学习路径与迭代建议</h2>
+  <p>建议按下面顺序读源码，由「执行核心」向外扩散：</p>
+  <div class="step">
+    <div class="step-item"><div class="step-num">1</div><div><strong>先懂循环</strong>：<code>agent/runner.py</code> → <code>agent/hook.py</code>。这是 Agent 的本质，读懂「LLM↔工具」循环与停止条件。</div></div>
+    <div class="step-item"><div class="step-num">2</div><div><strong>再懂编排</strong>：<code>agent/loop.py</code>。理解 session 锁、checkpoint、命令优先分发如何包裹 runner。</div></div>
+    <div class="step-item"><div class="step-num">3</div><div><strong>看上下文</strong>：<code>agent/context.py</code> + <code>agent/memory.py</code>。明白 prompt 怎么拼、长对话怎么压缩。</div></div>
+    <div class="step-item"><div class="step-num">4</div><div><strong>看接入</strong>：<code>providers/base.py</code> + <code>registry.py</code>，再挑一个 <code>channels/telegram.py</code> 通读收发。</div></div>
+    <div class="step-item"><div class="step-num">5</div><div><strong>动手改</strong>：照 §4 加一个工具 / 命令 / provider，用 <code>nanobot agent</code> 验证。</div></div>
+  </div>
+
+  <h3 id="iterate">值得迭代的方向</h3>
+  <table>
+    <tr><th>方向</th><th>切入点</th><th>价值</th></tr>
+    <tr><td>内容审核容错</td><td><code>runner.py</code> 错误分支 + <code>memory.py</code></td><td>当前 Dashscope <code>DataInspectionFailed</code> 会让会话卡死；可在 runner 检测此类错误并自动隔离/跳过污染消息，而非每次重发</td></tr>
+    <tr><td>全局 /reset all</td><td><code>command/builtin.py</code></td><td>当前 <code>/reset</code> 只清当前 session + 全局 MEMORY；可加 <code>/reset all</code> 遍历 sessions 目录</td></tr>
+    <tr><td>JSONL 体积治理</td><td><code>session/manager.py</code></td><td>普通渠道 JSONL 只增不减，可加定期归档/裁剪策略（参考 heartbeat 的 <code>retain_recent_legal_suffix</code>）</td></tr>
+    <tr><td>流式 API</td><td><code>api/server.py</code></td><td>当前不支持 <code>stream=true</code>，可补 SSE</td></tr>
+    <tr><td>工具沙箱增强</td><td><code>tools/shell.py</code></td><td>黑名单正则可演进为容器/seccomp 级隔离</td></tr>
+  </table>
+
+  <h3 id="pitfalls">易踩的坑（实战总结）</h3>
+  <div class="warn"><span class="i">🐛</span><div>
+    <strong>1. 删文件不生效</strong> —— SessionManager 有进程级缓存，删 JSONL 必须重启或 <code>invalidate()</code>。<br>
+    <strong>2. 删错 session 文件</strong> —— 线程级会话 key 形如 <code>slack:{chat_id}:{thread_ts}</code>，文件名是 <code>slack_C..._ts.jsonl</code>，别只删 <code>slack_C....jsonl</code>。<br>
+    <strong>3. MEMORY.md 污染</strong> —— 长期记忆每次拼进 prompt，污染后需用 <code>/reset</code> 一并清除。<br>
+    <strong>4. Telegram 命令被吞</strong> —— 新命令要同步加进 telegram.py 的正则白名单。<br>
+    <strong>5. allowFrom 空 = 拒绝所有</strong> —— v0.1.4.post4 起的安全默认，想全开要写 <code>["*"]</code>。
+  </div></div>
+
+  <footer>
+    本文档由源码静态分析生成 · 对应版本 v0.1.4.post6 · 行号与签名以仓库实际代码为准<br>
+    生成路径：<span class="file-path">docs/nanobot-learning-guide.html</span>
+  </footer>
+</main>
+</div>
+</body>
+</html>
